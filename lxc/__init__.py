@@ -90,6 +90,32 @@ def create(name, config_file=None, template=None, backing_store=None, template_o
         return 1
 
 
+def clone(name, original, snapshot=False):
+    '''
+    Clones a container.
+    '''
+
+    if exists(name):
+        raise ContainerAlreadyExists("The Container %s is already created!" % name)
+    if not exists(original):
+        raise ContainerNotExists("The container (%s) does not exist!" % original)
+
+    cmd = "lxc-clone -n %s -o %s" % (name, original)
+
+    if snapshot:
+        cmd += ' -s'
+
+    if subprocess.check_call('%s >> /dev/null' % cmd, shell=True) == 0:
+        if not exists(name):
+            _logger.critical("The Container %s doesn't seem to be cloned! (name: %s)", original, name)
+            raise ContainerNotExists("The container (%s) does not exist!" % name)
+
+        _logger.info("Container %s has been cloned to %s", original, name)
+        return 0
+    else:
+        return 1
+
+
 def exists(name):
     '''
     checks if a given container is defined or not
